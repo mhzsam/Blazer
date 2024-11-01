@@ -2,16 +2,17 @@
 @using Application.IInfrastructure
 @using Application.IService
 @using Application.Interface
+@using BlazerTest.Helper
 @using Domain.Entites
 @using Domain.Helper
 @inject IUserService _UserService
 @inject IUnitOfWork _UnitOfWork
 @attribute [StreamRendering]
 @rendermode InteractiveServer
-@inject AlertService AlertService
+
 
 <PageTitle>لیست کاربران</PageTitle>
-
+<Alert @ref="alertComponnent" />
 <button class="btn btn-success my-1" @onclick="AddUser">
 	<i class="bi bi-plus me-1"></i> افزودن
 </button>
@@ -84,12 +85,7 @@
 	private List<User>? Users { get; set; } = new List<User>();
 	private User? CurrentUser { get; set; } = new User();
 	private bool IsEditMode { get; set; } = false;
-
-	// protected override async Task OnAfterRenderAsync()
-	// {
-	// 	Users = await UserService.GetAllAsync();
-
-	// }
+	private Alert alertComponnent;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -97,7 +93,7 @@
 		Users = await _UserService.GetAllAsync();
 
 	}
-	private async Task AddUser()
+	private void AddUser()
 	{
 		CurrentUser = new User();
 		IsEditMode = true;
@@ -128,7 +124,7 @@
 					CurrentUser.Password = SecurityHelper.PasswordToSHA256(CurrentUser.Password);
 				await _UserService.InsertAsync(CurrentUser);
 				await _UserService.SaveChangesAsync();
-				AlertService.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+				alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
 			}
 			else
 			{
@@ -138,7 +134,7 @@
 
 				_UserService.Update(CurrentUser);
 				await _UserService.SaveChangesAsync();
-				AlertService.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+				alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
 			}
 
 			CurrentUser = null;
@@ -147,7 +143,7 @@
 		}
 		catch (Exception ex)
 		{
-			AlertService.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
 		}
 	}
 	private async Task Test()

@@ -1,8 +1,6 @@
 ﻿@using static BlazerTest.Components.Alert
 @inherits LayoutComponentBase
 
-@inject AlertService AlertService
-
 <div class="page">
 	<div class="sidebar">
 		<NavMenu />
@@ -14,10 +12,7 @@
 			<NavLink href="/logout" class="nav-link">خروج</NavLink>
 		</div>
 
-		<article class="content px-4">
-
-			<Alert @ref="alertComponent" OnDismiss="OnAlertDismiss" />
-			<br />
+		<article class="content px-4">		
 			@Body
 		</article>
 	</main>
@@ -29,26 +24,4 @@
 	<a class="dismiss">🗙</a>
 </div>
 
-@code {
-	private Alert alertComponent;
 
-	protected override void OnInitialized()
-	{
-		AlertService.OnShow += ShowAlert;
-	}
-
-	private void ShowAlert(string message, AlertColorEnum alertColor)
-	{
-		alertComponent.Show(message, alertColor); // فرض بر این است که متد Show در Alert شما وجود دارد
-	}
-
-	private void OnAlertDismiss()
-	{
-		// عملیاتی که باید بعد از بسته شدن پاپ‌آپ انجام شود
-	}
-
-	public void Dispose()
-	{
-		AlertService.OnShow -= ShowAlert;
-	}
-}

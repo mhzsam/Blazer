@@ -24,11 +24,6 @@ builder.Services.AddApplicationDBContext(connectionString);
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 builder.Services.AddInfrastructureService();
 builder.Services.AddAllApplicationServices();
-builder.Services.AddSingleton<AlertService>();
-
-
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

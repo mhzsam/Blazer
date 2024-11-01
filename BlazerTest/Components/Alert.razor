@@ -1,78 +1,67 @@
-﻿@code {
-    [Parameter] public string AlertMessage { get; set; } = "خطا";
-    [Parameter] public AlertColorEnum AlertColor { get; set; } = AlertColorEnum.Error; // رنگ پیش‌فرض
-    [Parameter] public bool IsVisible { get; set; } = false;
-    [Parameter] public EventCallback OnDismiss { get; set; }
+﻿@using BlazerTest.Helper
+@code {
+	[Parameter] public string AlertMessage { get; set; } = "خطا";
+	[Parameter] public AlertColorEnum AlertColor { get; set; } = AlertColorEnum.Error;
+	[Parameter] public bool IsVisible { get; set; } = false;
+	[Parameter] public EventCallback OnDismiss { get; set; }
 
-    private double Progress { get; set; } = 100;
-    private const int DisplayDuration = 3000; // مدت زمان نمایش پاپ‌آپ به میلی‌ثانیه
-    private const int Interval = 30; // فواصل به میلی‌ثانیه
-    private CancellationTokenSource _cancellationTokenSource;
+	private double Progress { get; set; } = 100;
+	private const int DisplayDuration = 3000;
+	private const int Interval = 30;
 
-    private void Close()
-    {
-        IsVisible = false;
-        AlertMessage = string.Empty;
-        Progress = 100; // Reset progress
-        _cancellationTokenSource?.Cancel(); // Stop any ongoing progress
-        OnDismiss.InvokeAsync(); // Dismiss the alert
-    }
 
-    public void Show(string message, AlertColorEnum alertColor)
-    {
-        AlertMessage = message;
-        AlertColor = alertColor; // تنظیم رنگ Alert
+	private void Close()
+	{
+		IsVisible = false;
+		AlertMessage = string.Empty;
+		Progress = 100;
+		OnDismiss.InvokeAsync();
+	}
 
-        IsVisible = true;
-        Progress = 100;
+	public void Show(string message, AlertColorEnum alertColor)
+	{
+		AlertMessage = message;
+		AlertColor = alertColor;
+		IsVisible = true;
+		Progress = 100;
 
-        // Reset cancellation token source
-        _cancellationTokenSource = new CancellationTokenSource();
+		Task.Run(() => UpdateProgress());
+	}
 
-        // Start the progress timer
-        Task.Run(() => UpdateProgress(_cancellationTokenSource.Token));
-    }
+	private void UpdateProgress()
+	{
 
-    private void UpdateProgress(CancellationToken cancellationToken)
-    {
-        // تایمر کاهش نوار پیشرفت
-        while (Progress > 0 && IsVisible)
-        {
-            Progress -= 100 / (DisplayDuration / Interval);
-            Thread.Sleep(Interval);
-
-            // Check if cancellation was requested
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-
-            InvokeAsync(StateHasChanged);
-        }
-
-        if (IsVisible)
-        {
-            Close();
-        }
-    }
+		while (Progress > 0 && IsVisible)
+		{
+			Progress -= 100 / (DisplayDuration / Interval);
+			Thread.Sleep(Interval);
+			InvokeAsync(StateHasChanged);
+		}
+		
+		if (IsVisible)
+		{
+			Close();
+			InvokeAsync(StateHasChanged);
+		}
+	}
 }
 
 @if (IsVisible)
 {
-    <div class="modal show d-block" style="top: 0; position: fixed; z-index: 1050;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header @(AlertColor == AlertColorEnum.Error ? "alert-danger" : AlertColor == AlertColorEnum.Info ? "alert-warning" : "alert-success")">
-                    <h5 class="modal-title">پیام</h5>
-                    <button type="button" class="btn-close" @onclick="Close" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p>@AlertMessage</p>
-                    <div class="progress mt-2" style="height: 10px;">
-                        <div class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="modal show d-block" style="top: 0; position: fixed; z-index: 1050;">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header @(AlertColor == AlertColorEnum.Error ? "alert-danger" : AlertColor == AlertColorEnum.Info ? "alert-warning" : "alert-success")">
+					<h5 class="modal-title">پیام</h5>
+					<button type="button" class="btn-close" @onclick="Close" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p>@AlertMessage</p>
+					<div class="progress mt-2" style="height: 10px;">
+						<div class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 }
