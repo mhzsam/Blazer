@@ -27,6 +27,8 @@ namespace Infrastructure.Repository.Base
 		{
 			return _context;
 		}
+		public DbSet<T> GetEntity() => _entities;
+
 		public void Delete(T entity)
 		{
 			_entities.Remove(entity);
@@ -54,18 +56,25 @@ namespace Infrastructure.Repository.Base
 		}
 		public void Update(T entity)
 		{
-			
-			var entry = _context.Entry(entity);			
+
+			var entry = _context.Entry(entity);
 			if (entry.State == EntityState.Detached)
 				_context.Attach(entity);
-			
+
 			entry.State = EntityState.Modified;
-	
+
 		}
 		public async Task<List<T>?> FindByConditionAsync(Expression<Func<T, bool>> predicate)
 		{
 			IQueryable<T> query = _entities.Where(predicate).AsQueryable<T>();
 			return await query.ToListAsync();
+		}
+
+
+		public List<T>? FindByCondition(Expression<Func<T, bool>> predicate)
+		{
+			IQueryable<T> query = _entities.Where(predicate).AsQueryable<T>();
+			return query.ToList();
 		}
 		public async Task<int> TotalRecords()
 		{

@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace Application.IInfrastructure
 {
-	public interface IUserRoleRepository
+	public interface IUserRoleRepository : IRepository<UserRole>
 	{
+		Task<List<UserRole>?> GetAllByRelationAsync();
 	}
 }

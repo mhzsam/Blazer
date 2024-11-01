@@ -15,7 +15,6 @@
 
 html, body {
     font-family: IRANSansXFaNum !important;
-  
 }
 
 a, .btn-link {
@@ -64,4 +63,8 @@ h1:focus {
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
+}
+
+.modal_imp {
+    z-index: 99999 !important
 }

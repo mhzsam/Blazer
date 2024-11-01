@@ -48,17 +48,17 @@
 
 @if (IsVisible)
 {
-	<div class="modal show d-block" style="top: 0; position: fixed; z-index: 1050;">
+	<div class=" modal show d-block modal_imp" style="top: 0; position: fixed; z-index: 1050;">
 		<div class="modal-dialog modal-dialog-centered">
 			<div class="modal-content">
-				<div class="modal-header @(AlertColor == AlertColorEnum.Error ? "alert-danger" : AlertColor == AlertColorEnum.Info ? "alert-warning" : "alert-success")">
-					<h5 class="modal-title">پیام</h5>
-					<button type="button" class="btn-close" @onclick="Close" aria-label="Close"></button>
+				<div class=" modal-header @(AlertColor == AlertColorEnum.Error ? "bg-danger" : AlertColor == AlertColorEnum.Info ? "bg-warning" : "bg-success")">
+					<h5 class="modal-title text-white">پیام</h5>
+					<button type="button" class="btn-close btn-close-white" @onclick="Close" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<p>@AlertMessage</p>
 					<div class="progress mt-2" style="height: 10px;">
-						<div class="progress-bar progress-bar-striped bg-info" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
+						<div class="progress-bar progress-bar-striped @(AlertColor == AlertColorEnum.Error ? "bg-danger" : AlertColor == AlertColorEnum.Info ? "bg-warning" : "bg-success")" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
 					</div>
 				</div>
 			</div>

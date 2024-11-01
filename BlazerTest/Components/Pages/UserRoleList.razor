@@ -1,0 +1,316 @@
+﻿@page "/UserRoleList"
+@using Application.Dto
+@using Application.IInfrastructure
+@using Application.IService
+@using Application.Interface
+@using BlazerTest.Helper
+@using Domain.Entites
+@using Domain.Helper
+@using Mapster
+@inject IUserRoleService _UserRoleService
+@inject IUserService _UserService
+@inject IRoleService _RoleService
+@inject IUnitOfWork _UnitOfWork
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+
+<PageTitle>لیست کاربران</PageTitle>
+<Alert @ref="alertComponnent" />
+<ConfirmationDialog IsVisible="@showConfirmationDialog" OnConfirm="HandleConfirm" />
+
+<button class="btn btn-success my-1" @onclick="AddUserRole">
+	<i class="bi bi-plus me-1"></i> افزودن
+</button>
+@if (lstUserWithRoleDto == null)
+{
+	<p>Loading...</p>
+}
+@if (lstUserWithRoleDto != null)
+{
+	<table class="table table-striped table-hover table-bordered">
+		<thead class="table-dark">
+			<tr>
+				<th>نام</th>
+				<th>نام خانوادگی</th>
+				<th>شماره تماس</th>
+				<th>نقش ها</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in lstUserWithRoleDto)
+			{
+				<tr>
+					<td>@item.FirstName</td>
+					<td>@item.LastName</td>
+					<td>@item.MobileNumber</td>
+					<td>@(string.Join(',', item.Roles.Select(s => s.RoleName)))</td>
+					<td>
+						<button class="btn btn-primary btn-sm" @onclick="() => EditUserRole(item)">ویرایش</button>
+						<button class="btn btn-danger btn-sm ms-1" @onclick="() => ShowConfirmation(item.Id)">حذف</button>
+
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+}
+
+
+<div class="modal" tabindex="-1" role="dialog" style="display: @(IsEditMode ? "block" : "none")">
+	<div class="modal-dialog" role="document" style="margin: auto;  top: 30%;">
+		<div class="modal-content">
+
+			<div class="modal-body">
+				@foreach (var item in roles)
+				{
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="@item.Id "
+							   @bind="item.IsCheked" />
+						<label class=" form-check-label" for="@item.RoleName">
+							@item.RoleName
+						</label>
+					</div>
+				}
+				<div class="d-flex flex-row-reverse">
+					<button type="button" class="btn btn-secondary mx-1 " @onclick="()=>IsEditMode=false">لغو</button>
+					<button type="button" class="btn btn-danger mx-1" @onclick="()=>SaveUserRole()">تأیید</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(IsAddMode ? "block" : "none")">
+	<div class="modal-dialog" role="document" style="margin: auto;  top: 20%;">
+		<div class="modal-content">
+			<div class="form-group m">
+				<label class="my-1" for="mobileNumber">شماره موبایل</label>
+				<InputText style="margin:auto;width:90%;" id="mobileNumber" class="form-control my-2 " @bind-Value="@searchMobile" placeholder="مثلاً 09123456789" />
+				@if (findUserMessage != null)
+				{
+					<div class="text-danger mx-4">کاربر پیدا نشد !!!</div>
+				}
+
+				<div class="d-flex flex-row-reverse my-3 mx-2">
+					<button type="button" class="btn btn-info mx-1" @onclick="()=>SearchUser()">جست و جو </button>
+					@if (CurrentUserRoles == null)
+					{
+						<button type="button" class="btn btn-secondary mx-1" @onclick="()=>CanselAddRole()">انصراف</button>
+
+					}
+				</div>
+
+			</div>
+			@if (findedUser != null && CurrentUserRoles != null)
+			{
+				<div class="my-1">
+					<div class="form-group">
+						<span>نام</span>
+						<span class="mx-2">:</span>
+						<span class="mx-2">@CurrentUserRoles.FirstName </span>
+					</div>
+					<div class="form-group">
+						<span>نام خانوادگی </span>
+						<span class="mx-2">:</span>
+						<span class="mx-2">@CurrentUserRoles.LastName </span>
+					</div>
+					<div class="form-group">
+						<span>شماره موبایل </span>
+						<span class="mx-2">:</span>
+						<span class="mx-2">@CurrentUserRoles.MobileNumber </span>
+					</div>
+				</div>
+
+				<div class="modal-body">
+					@foreach (var item in roles)
+					{
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="@item.Id "
+								   @bind="item.IsCheked" />
+							<label class=" form-check-label" for="@item.RoleName">
+								@item.RoleName
+							</label>
+						</div>
+					}
+					<div class="d-flex flex-row-reverse">
+						<button type="button" class="btn btn-secondary mx-1 " @onclick="()=>CanselAddRole()">لغو</button>
+						<button type="button" class="btn btn-danger mx-1" @onclick="()=>SaveUserRole()">تأیید</button>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+
+
+@code {
+
+	private List<UserWithRoleDto>? lstUserWithRoleDto = new List<UserWithRoleDto>();
+	private List<CheckBoxRoleDto>? roles = new List<CheckBoxRoleDto>();
+	private UserWithRoleDto? CurrentUserRoles;
+	private string? searchMobile = null;
+	private string? findUserMessage = null;
+
+
+	private bool IsEditMode = false;
+	private bool IsAddMode = false;
+	private User? findedUser = null;
+	private Alert alertComponnent;
+	private bool showConfirmationDialog = false;
+	private int userRoleIdToDelete;
+	protected override async Task OnInitializedAsync()
+	{
+
+		lstUserWithRoleDto = await _UserRoleService.GetAllByRelationAsync();
+		List<Role> lstRole = await _RoleService.GetAllAsync();
+		roles = lstRole.Adapt<List<CheckBoxRoleDto>>();
+	}
+
+	private void SubmitRoles()
+	{
+		// var selectedRoles = roles.Where(r => r.IsChecked).ToList();
+		// // ارسال لیست نقش‌های انتخاب‌شده به سرور یا انجام عملیات دیگر
+	}
+
+
+	private void ShowConfirmation(int userRoleId)
+	{
+		userRoleIdToDelete = userRoleId;
+		showConfirmationDialog = true;
+
+	}
+	private async Task HandleConfirm(bool confirmed)
+	{
+		if (confirmed)
+		{
+			await DeleteUserRole(userRoleIdToDelete);
+
+			// همچنین می‌توانید کد لازم برای بروزرسانی لیست کاربران را اضافه کنید.
+		}
+		showConfirmationDialog = false;
+	}
+
+
+	private void AddUserRole()
+	{
+		searchMobile = null;
+		CurrentUserRoles = null;
+		findedUser = null;
+		IsAddMode = true;
+		findUserMessage = null;
+
+	}
+	private void CanselAddRole()
+	{
+		searchMobile = null;
+		CurrentUserRoles = null;
+		findedUser = null;
+		IsAddMode = false;
+		findUserMessage = null;
+
+	}
+	private async Task EditUserRole(UserWithRoleDto userWithRoleDto)
+	{
+		CurrentUserRoles = null;
+		CurrentUserRoles = userWithRoleDto;
+		userWithRoleDto?.Roles?.ForEach(e => roles.FirstOrDefault(w => w.Id == e.Id).IsCheked = true);
+		IsEditMode = true;
+	}
+
+	private async Task DeleteUserRole(int userId)
+	{
+		try
+		{
+			List<UserRole>? userRoles = await _UserRoleService.FindByConditionAsync(w => w.UserId == userId);
+			if (userRoles == null || userRoles.Count == 0)
+				return;
+			foreach (var item in userRoles)
+				_UserRoleService.Delete(item);
+
+			await _UserRoleService.SaveChangesAsync();
+			alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+
+			await OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+	private async Task SearchUser()
+	{
+		try
+		{
+
+			findedUser = null;
+			findUserMessage = null;
+			if (string.IsNullOrWhiteSpace(searchMobile))
+				return;
+			findedUser = (await _UserService.FindByConditionAsync(w => w.MobileNumber == searchMobile)).FirstOrDefault();
+			if (findedUser is not User)
+			{
+				findUserMessage = "کاربر پیدا نشد";
+				return;
+			}
+			UserWithRoleDto? findedUserWithRoleDto = (await _UserRoleService.GetAllByRelationAsync()).Where(w => w.Id == findedUser.Id).FirstOrDefault();
+			if (findedUserWithRoleDto is UserWithRoleDto)
+			{
+				IsAddMode = false;
+				findedUser = null;
+				await EditUserRole(findedUserWithRoleDto);
+				return;
+			}
+			CurrentUserRoles = findedUser.Adapt<UserWithRoleDto>();
+			if (CurrentUserRoles != null && CurrentUserRoles?.Roles == null)
+				CurrentUserRoles.Roles = new List<Role>();
+
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+
+	}
+
+	private async Task SaveUserRole()
+	{
+		try
+		{
+			int currentUserId = CurrentUserRoles?.Id ?? -1;
+			foreach (var item in roles)
+			{
+				if (item.IsCheked == true)
+				{
+					Role? findedRole = CurrentUserRoles?.Roles.Where(w => w.Id == item.Id).FirstOrDefault();
+					if (findedRole is not Role)
+						await _UserRoleService.InsertAsync(new UserRole { RoleId = item.Id, UserId = currentUserId });
+
+				}
+				if (item.IsCheked == false)
+				{
+					Role? findedRole = CurrentUserRoles?.Roles.Where(w => w.Id == item.Id).FirstOrDefault();
+					if (findedRole is Role)
+					{
+						UserRole? result = (await _UserRoleService.FindByConditionAsync(w => w.RoleId == item.Id && w.UserId == currentUserId)).FirstOrDefault();
+						if (result is UserRole)
+							_UserRoleService.Delete(result);
+
+					}
+				}
+			}
+			await _UserRoleService.SaveChangesAsync();
+			alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+			IsEditMode = false;
+			IsAddMode = false;
+			await OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+
+}

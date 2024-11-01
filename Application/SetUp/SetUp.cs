@@ -13,7 +13,7 @@ namespace Application.SetUp
 			services.AddScoped<IUserService, UserService>();
 			services.AddScoped<IUserRoleService, UserRoleService>();
 			services.AddScoped<IRoleService, RoleService>();
-			//services.AddSingleton(typeof(Mapper<>));
+		
 
 		}
 

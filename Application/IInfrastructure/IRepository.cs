@@ -9,6 +9,7 @@ namespace Application.IInfrastructure
 	public interface IRepository<T>
 	{
 		void Delete(T entity);
+		List<T>? FindByCondition(System.Linq.Expressions.Expression<Func<T, bool>> predicate);
 		Task<List<T>?> FindByConditionAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate);
 		Task<List<T>?> GetAllAsync();
 		Task<List<T>?> GetAllPagedAsync(int page, int rowPerPage);

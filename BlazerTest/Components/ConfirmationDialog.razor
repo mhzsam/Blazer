@@ -1,5 +1,32 @@
-﻿<h3>ConfirmationDialog</h3>
+﻿@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> OnConfirm { get; set; }
+    [Parameter] public string Message { get; set; } = "آیا از انجام عملیات مطمئن هستید؟";
 
-@code {
+    private async Task Confirm()
+    {
+        await OnConfirm.InvokeAsync(true);
+        IsVisible = false;
+    }
 
+    private async Task Cancel()
+    {
+        await OnConfirm.InvokeAsync(false);
+        IsVisible = false;
+    }
 }
+
+<div class="modal @(IsVisible ? "show" : "")" tabindex="-1" role="dialog" style="display: @(IsVisible ? "block" : "none")">
+    <div class="modal-dialog" role="document" style="margin: auto;  top: 30%;">
+        <div class="modal-content">
+            
+            <div class="modal-body">
+                <p>@Message</p>
+                <div class="d-flex flex-row-reverse">
+                <button type="button" class="btn btn-secondary mx-1" @onclick="Cancel">لغو</button>
+                <button type="button" class="btn btn-danger mx-1" @onclick="Confirm">تأیید</button>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>

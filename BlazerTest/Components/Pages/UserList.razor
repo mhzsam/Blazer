@@ -13,6 +13,8 @@
 
 <PageTitle>لیست کاربران</PageTitle>
 <Alert @ref="alertComponnent" />
+<ConfirmationDialog IsVisible="@showConfirmationDialog" OnConfirm="HandleConfirm" />
+
 <button class="btn btn-success my-1" @onclick="AddUser">
 	<i class="bi bi-plus me-1"></i> افزودن
 </button>
@@ -40,7 +42,7 @@
 					<td>@user.MobileNumber</td>
 					<td>
 						<button class="btn btn-primary btn-sm" @onclick="() => EditUser(user.Id)">ویرایش</button>
-						<button class="btn btn-danger btn-sm ms-1" @onclick="() => DeleteUser(user.Id)">حذف</button>
+						<button class="btn btn-danger btn-sm ms-1" @onclick="() => ShowConfirmation(user.Id)">حذف</button>
 
 					</td>
 				</tr>
@@ -86,6 +88,32 @@
 	private User? CurrentUser { get; set; } = new User();
 	private bool IsEditMode { get; set; } = false;
 	private Alert alertComponnent;
+	private bool showConfirmationDialog = false;
+	private int userIdToDelete;
+
+	private void ShowConfirmation(int userId)
+	{
+		userIdToDelete = userId;
+		showConfirmationDialog = true;
+	}
+	private async Task HandleConfirm(bool confirmed)
+	{
+		try
+		{
+			if (confirmed)
+			{
+				await DeleteUser(userIdToDelete);
+
+				// همچنین می‌توانید کد لازم برای بروزرسانی لیست کاربران را اضافه کنید.
+			}
+			showConfirmationDialog = false;
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message + ex?.InnerException ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -107,9 +135,16 @@
 
 	private async Task DeleteUser(int userId)
 	{
-		_UserService.Delete(new User { Id = userId });
-		await _UserService.SaveChangesAsync();
-		await OnInitializedAsync();
+		try
+		{
+			_UserService.Delete(new User { Id = userId });
+			await _UserService.SaveChangesAsync();
+			await OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
 	}
 
 	private async Task SaveUser()
@@ -117,11 +152,11 @@
 		try
 		{
 
-
 			if (CurrentUser.Id == 0)
 			{
 				if (!string.IsNullOrEmpty(CurrentUser?.Password))
 					CurrentUser.Password = SecurityHelper.PasswordToSHA256(CurrentUser.Password);
+
 				await _UserService.InsertAsync(CurrentUser);
 				await _UserService.SaveChangesAsync();
 				alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
@@ -154,7 +189,7 @@
 			var ff = await _UserService.GetAsync(1);
 			await _UserService.InsertAsync(new User { FirstName = "bb", LastName = "dd", MobileNumber = "09120198177", Password = "5454" });
 			// var lst = await _UserRoleRepository.GetAsync(1);
-			// Role? gg = lst.Role;
+			//Role? gg = lst.Role;
 			await _UnitOfWork.SaveAndCommitAsync();
 		}
 		catch (Exception ex)

@@ -4,6 +4,7 @@ using Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241101170236_init 2")]
+    partial class init2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -69,7 +72,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             InsertBy = 0,
-                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 418, DateTimeKind.Local).AddTicks(503),
+                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 413, DateTimeKind.Local).AddTicks(1605),
                             IsActive = true,
                             IsDeleted = false,
                             RoleName = "SuperAdmin"
@@ -136,7 +139,7 @@ namespace Infrastructure.Migrations
                             Id = 1,
                             FirstName = "محمد",
                             InsertBy = 0,
-                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 418, DateTimeKind.Local).AddTicks(2135),
+                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 414, DateTimeKind.Local).AddTicks(2577),
                             IsDeleted = false,
                             LastName = "ضرابی",
                             MobileNumber = "09120198177",
@@ -189,7 +192,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             InsertBy = 0,
-                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 418, DateTimeKind.Local).AddTicks(3435),
+                            InsertDate = new DateTime(2024, 11, 1, 20, 32, 36, 414, DateTimeKind.Local).AddTicks(9922),
                             IsDeleted = false,
                             RoleId = 1,
                             UserId = 1

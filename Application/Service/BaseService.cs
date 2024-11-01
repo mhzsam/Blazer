@@ -1,5 +1,6 @@
 ﻿using Application.IInfrastructure;
 using Application.IService;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,45 +19,51 @@ namespace Application.Service
 			_repository = repository;
 		}
 
-		public void Delete(T entity)
+		public virtual void Delete(T entity)
 		{
 			_repository.Delete(entity);
 		}
 
-		public Task<List<T>?> FindByConditionAsync(Expression<Func<T, bool>> predicate)
+		public virtual async Task<List<T>?> FindByConditionAsync(Expression<Func<T, bool>> predicate)
 		{
-			return _repository.FindByConditionAsync(predicate);
+			return await _repository.FindByConditionAsync(predicate);
+		}
+	
+		public virtual List<T>? FindByCondition(Expression<Func<T, bool>> predicate)
+		{
+			return _repository.FindByCondition(predicate);
 		}
 
-		public Task<List<T>?> GetAllPagedAsync(int page, int rowPerPage)
+
+		public virtual async Task<List<T>?> GetAllPagedAsync(int page, int rowPerPage)
 		{
-			return _repository.GetAllPagedAsync(page, rowPerPage);
+			return await _repository.GetAllPagedAsync(page, rowPerPage);
 		}
 
-		public async Task<T?> GetAsync(int id)
+		public virtual async Task<T?> GetAsync(int id)
 		{
 			return await _repository.GetAsync(id);
 		}
 
-		public Task<T> InsertAsync(T entity)
+		public virtual async Task<T> InsertAsync(T entity)
 		{
-			return _repository.InsertAsync(entity);
+			return await _repository.InsertAsync(entity);
 		}
 
-		public Task<int> TotalRecords()
+		public virtual async Task<int> TotalRecords()
 		{
-			return _repository.TotalRecords();
+			return await _repository.TotalRecords();
 		}
 
-		public void Update(T entity)
+		public virtual void Update(T entity)
 		{
 			_repository.Update(entity);
 		}
-		public Task<List<T>?> GetAllAsync()
+		public virtual async Task<List<T>?> GetAllAsync()
 		{
-			return _repository.GetAllAsync();
+			return await _repository.GetAllAsync();
 		}
-		public async Task SaveChangesAsync()
+		public virtual async Task SaveChangesAsync()
 		{
 			await _repository.SaveChangesAsync();
 		}

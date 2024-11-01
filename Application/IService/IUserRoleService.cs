@@ -1,4 +1,5 @@
-﻿using Application.Service;
+﻿using Application.Dto;
+using Application.Service;
 using Domain.Entites;
 using System;
 using System.Collections.Generic;
@@ -10,5 +11,6 @@ namespace Application.IService
 {
 	public interface IUserRoleService : IBaseService<UserRole>
 	{
+		Task<List<UserWithRoleDto>?> GetAllByRelationAsync();
 	}
 }
