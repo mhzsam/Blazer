@@ -1,0 +1,171 @@
+﻿@page "/UserList"
+@using Application.IInfrastructure
+@using Application.IService
+@using Application.Interface
+@using Domain.Entites
+@using Domain.Helper
+@inject IUserService _UserService
+@inject IUnitOfWork _UnitOfWork
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+@inject AlertService AlertService
+
+<PageTitle>لیست کاربران</PageTitle>
+
+<button class="btn btn-success my-1" @onclick="AddUser">
+	<i class="bi bi-plus me-1"></i> افزودن
+</button>
+@if (Users == null)
+{
+	<p>Loading...</p>
+}
+@if (Users != null && IsEditMode == false)
+{
+	<table class="table table-striped table-hover table-bordered">
+		<thead class="table-dark">
+			<tr>
+				<th>نام</th>
+				<th>نام خانوادگی</th>
+				<th>شماره تماس</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var user in Users)
+			{
+				<tr>
+					<td>@user.FirstName</td>
+					<td>@user.LastName</td>
+					<td>@user.MobileNumber</td>
+					<td>
+						<button class="btn btn-primary btn-sm" @onclick="() => EditUser(user.Id)">ویرایش</button>
+						<button class="btn btn-danger btn-sm ms-1" @onclick="() => DeleteUser(user.Id)">حذف</button>
+
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+}
+
+@if (IsEditMode)
+{
+	<EditForm Model="@CurrentUser" OnValidSubmit="SaveUser">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-3">
+			<label>نام</label>
+			<InputText class="form-control" @bind-Value="CurrentUser.FirstName" />
+		</div>
+
+		<div class="mb-3">
+			<label>نام خانوادگی</label>
+			<InputText class="form-control" @bind-Value="CurrentUser.LastName" />
+		</div>
+
+		<div class="mb-3">
+			<label>شماره تماس</label>
+			<InputText class="form-control" @bind-Value="CurrentUser.MobileNumber" />
+		</div>
+
+		<div class="mb-3">
+			<label>رمز عبور</label>
+			<InputText class="form-control" @bind-Value="CurrentUser.Password" type="password" />
+		</div>
+
+		<button type="submit" class="btn btn-primary">Save</button>
+		<button type="button" class="btn btn-secondary ms-2" @onclick="() => IsEditMode = false">Cancel</button>
+	</EditForm>
+}
+@code {
+
+	private List<User>? Users { get; set; } = new List<User>();
+	private User? CurrentUser { get; set; } = new User();
+	private bool IsEditMode { get; set; } = false;
+
+	// protected override async Task OnAfterRenderAsync()
+	// {
+	// 	Users = await UserService.GetAllAsync();
+
+	// }
+
+	protected override async Task OnInitializedAsync()
+	{
+
+		Users = await _UserService.GetAllAsync();
+
+	}
+	private async Task AddUser()
+	{
+		CurrentUser = new User();
+		IsEditMode = true;
+	}
+
+	private async Task EditUser(int userId)
+	{
+		CurrentUser = await _UserService.GetAsync(userId);
+		IsEditMode = true;
+	}
+
+	private async Task DeleteUser(int userId)
+	{
+		_UserService.Delete(new User { Id = userId });
+		await _UserService.SaveChangesAsync();
+		await OnInitializedAsync();
+	}
+
+	private async Task SaveUser()
+	{
+		try
+		{
+
+
+			if (CurrentUser.Id == 0)
+			{
+				if (!string.IsNullOrEmpty(CurrentUser?.Password))
+					CurrentUser.Password = SecurityHelper.PasswordToSHA256(CurrentUser.Password);
+				await _UserService.InsertAsync(CurrentUser);
+				await _UserService.SaveChangesAsync();
+				AlertService.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+			}
+			else
+			{
+				var user = await _UserService.GetAsync(CurrentUser.Id);
+				if (CurrentUser?.Password != user?.Password)
+					CurrentUser.Password = SecurityHelper.PasswordToSHA256(CurrentUser.Password);
+
+				_UserService.Update(CurrentUser);
+				await _UserService.SaveChangesAsync();
+				AlertService.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+			}
+
+			CurrentUser = null;
+			await OnInitializedAsync(); // Refresh list
+			IsEditMode = false;
+		}
+		catch (Exception ex)
+		{
+			AlertService.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+	private async Task Test()
+	{
+		try
+		{
+			await _UnitOfWork.BeginTransactionAsync();
+			var ff = await _UserService.GetAsync(1);
+			await _UserService.InsertAsync(new User { FirstName = "bb", LastName = "dd", MobileNumber = "09120198177", Password = "5454" });
+			// var lst = await _UserRoleRepository.GetAsync(1);
+			// Role? gg = lst.Role;
+			await _UnitOfWork.SaveAndCommitAsync();
+		}
+		catch (Exception ex)
+		{
+			await _UnitOfWork.RollbackAsync();
+			throw new Exception(ex.Message);
+		}
+
+	}
+}

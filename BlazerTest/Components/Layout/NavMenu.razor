@@ -1,0 +1,39 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="">منوی سایت </a>
+	</div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+	<nav class="flex-column">
+
+		<div class="nav-item px-3">
+			<NavLink class="nav-link d-flex align-items-center" href="/" Match="NavLinkMatch.All">
+				  <i style="margin-top:-20px" class="bi bi-house me-2"></i>
+				 <span>خانه</span>
+			</NavLink>
+		</div>
+
+		<div class="nav-item px-3">
+			<NavLink class="nav-link d-flex align-items-center" href="userlist" Match="NavLinkMatch.All">
+				<i style="margin-top:-20px" class="bi bi-person-circle me-2"></i>
+				<span>کاربران</span>
+			</NavLink>
+		</div>
+		<div class="nav-item px-3">
+			<NavLink class="nav-link d-flex align-items-center" href="rolelist" Match="NavLinkMatch.All">
+				<i style="margin-top:-20px" class="bi bi-three-dots me-2"></i>
+				<span>نقش ها</span>
+			</NavLink>
+		</div
+		<div class="nav-item px-3">
+			<NavLink class="nav-link d-flex align-items-center" href="userRolelist" Match="NavLinkMatch.All">
+				<i style="margin-top:-20px" class="bi bi-ui-radios me-2"></i>
+				<span>دسترسی نقش</span>
+			</NavLink>
+		</div>
+	</nav>
+</div>
+
