@@ -18,6 +18,8 @@ namespace Infrastructure.SetUp
 			services.AddScoped<IRoleRepository, RoleRepository>();
 			services.AddScoped<IUserRepository, UserRepository>();
 			services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+			services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
+			services.AddScoped<IPermissionRepository, PermissionRepository>();
 
 		}
 		public static void AddApplicationDBContext(this IServiceCollection services, string connectionString)

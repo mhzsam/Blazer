@@ -25,7 +25,7 @@ namespace Infrastructure.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new UserConfiguration());
-            modelBuilder.Entity<User>().HasData(new User() { Id = 1, FirstName = "محمد", LastName = "ضرابی", Password = SecurityHelper.PasswordToSHA256("1234"), MobileNumber = "09120198177" });
+            modelBuilder.Entity<User>().HasData(new User() { Id = 1, FirstName = "محمد", LastName = "ضرابی", Password = SecurityHelper.PasswordToSHA256("Mm@123456"), MobileNumber = "09120198177" });
             modelBuilder.Entity<Role>().HasData(new Role() { Id = 1, IsActive = true, RoleName = "SuperAdmin" });
             modelBuilder.Entity<UserRole>().HasData(new UserRole() { Id = 1, RoleId = 1, UserId = 1 });
 

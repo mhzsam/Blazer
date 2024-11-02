@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entites;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace Application.IInfrastructure
 		void Delete(T entity);
 		List<T>? FindByCondition(System.Linq.Expressions.Expression<Func<T, bool>> predicate);
 		Task<List<T>?> FindByConditionAsync(System.Linq.Expressions.Expression<Func<T, bool>> predicate);
-		Task<List<T>?> GetAllAsync();
+		Task<List<T>?> GetAllAsync();		
 		Task<List<T>?> GetAllPagedAsync(int page, int rowPerPage);
 		Task<T?> GetAsync(int id);
 		Task<T> InsertAsync(T entity);

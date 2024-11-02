@@ -13,6 +13,8 @@ namespace Application.SetUp
 			services.AddScoped<IUserService, UserService>();
 			services.AddScoped<IUserRoleService, UserRoleService>();
 			services.AddScoped<IRoleService, RoleService>();
+			services.AddScoped<IRolePermissionService, RolePermissionService>();
+			services.AddScoped<IPermissionService, PermissionService>();
 		
 
 		}

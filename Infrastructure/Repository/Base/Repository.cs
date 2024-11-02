@@ -66,7 +66,7 @@ namespace Infrastructure.Repository.Base
 		}
 		public async Task<List<T>?> FindByConditionAsync(Expression<Func<T, bool>> predicate)
 		{
-			IQueryable<T> query = _entities.Where(predicate).AsQueryable<T>();
+			IQueryable<T> query = _entities.Where(predicate).AsNoTracking().AsQueryable<T>();
 			return await query.ToListAsync();
 		}
 

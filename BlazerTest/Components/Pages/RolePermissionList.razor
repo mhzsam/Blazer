@@ -1,0 +1,313 @@
+﻿@page "/RolePermissionList"
+@using Application.Dto
+@using Application.IInfrastructure
+@using Application.IService
+@using Application.Interface
+@using BlazerTest.Helper
+@using Domain.Entites
+@using Domain.Helper
+@using Mapster
+@inject IRolePermissionService _RolePermissionService
+@inject IPermissionService _PermissionService
+@inject IRoleService _RoleService
+@inject IUnitOfWork _UnitOfWork
+@attribute [StreamRendering]
+@rendermode InteractiveServer
+
+
+<PageTitle>لیست دسترسی نقش ها</PageTitle>
+<Alert @ref="alertComponnent" />
+<ConfirmationDialog IsVisible="@showConfirmationDialog" OnConfirm="HandleConfirm" />
+
+<button class="btn btn-success my-1" @onclick="AddRolePermission">
+	<i class="bi bi-plus me-1"></i> افزودن
+</button>
+@if (lstRoleWithPermissionDto == null)
+{
+	<p>Loading...</p>
+}
+@if (lstRoleWithPermissionDto != null)
+{
+	<table class="table table-striped table-hover table-bordered">
+		<thead class="table-dark">
+			<tr>
+				<th>نام نقش</th>
+
+				<th>دسترسی ها</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var item in lstRoleWithPermissionDto)
+			{
+				<tr>
+					<td>@item.RoleName</td>
+
+					<td>@(string.Join(',', item.Permissions.Select(s => s.PageName)))</td>
+					<td>
+						<button class="btn btn-primary btn-sm" @onclick="() => EditRolePermission(item)">ویرایش</button>
+						<button class="btn btn-danger btn-sm ms-1" @onclick="() => ShowConfirmation(item.Id)">حذف</button>
+
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+
+}
+
+
+<div class="modal" tabindex="-1" role="dialog" style="display: @(IsEditMode ? "block" : "none")">
+	<div class="modal-dialog" role="document" style="margin: auto;  top: 30%;">
+		<div class="modal-content">
+
+			<div class="modal-body">
+				@foreach (var item in permission)
+				{
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="@item.Id "
+							   @bind="item.IsCheked" />
+						<label class=" form-check-label" for="@item.PageName">
+							@item.PageName
+						</label>
+					</div>
+				}
+				<div class="d-flex flex-row-reverse">
+					<button type="button" class="btn btn-secondary mx-1 " @onclick="()=>IsEditMode=false">لغو</button>
+					<button type="button" class="btn btn-danger mx-1" @onclick="()=>SaveRolePermission()">تأیید</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="modal" tabindex="-1" role="dialog" style="display: @(IsAddMode ? "block" : "none")">
+	<div class="modal-dialog" role="document" style="margin: auto;  top: 20%;">
+		<div class="modal-content">
+			<div class="form-group m">
+				<select style="margin:auto;width:70%" class="my-3 mx-3" @onchange="OnSelectionChanged">
+					<option value="">انتخاب کنید</option>
+					@foreach (var option in lstRole)
+					{
+						<option value="@option.Id">@option.RoleName</option>
+					}
+				</select>
+
+
+
+			</div>
+			@if (findedRoleWithPermissionDto != null && CurrentRolePermissions != null)
+			{
+				<div class="my-1">
+					<div class="form-group">
+						<span>نام نقش</span>
+						<span class="mx-2">:</span>
+						<span class="mx-2">@CurrentRolePermissions.RoleName </span>
+					</div>
+
+				</div>
+
+				<div class="modal-body">
+					@foreach (var item in permission)
+					{
+						<div class="form-check">
+							<input class="form-check-input" type="checkbox" id="@item.Id "
+								   @bind="item.IsCheked" />
+							<label class=" form-check-label" for="@item.PageName">
+								@item.PageName
+							</label>
+						</div>
+					}
+					<div class="d-flex flex-row-reverse">
+						<button type="button" class="btn btn-secondary mx-1 " @onclick="()=>CancelAddRole()">لغو</button>
+						<button type="button" class="btn btn-danger mx-1" @onclick="()=>SaveRolePermission()">تأیید</button>
+					</div>
+				</div>
+			}
+			<div class="d-flex flex-row-reverse">
+				<button type="button" class="btn btn-secondary mx-2 my-2 " @onclick="()=>CancelAddRole()">لغو</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+@code {
+
+	private List<RoleWithPermissionDto>? lstRoleWithPermissionDto = new List<RoleWithPermissionDto>();
+	private List<CheckBoxPermissionDto>? permission = new List<CheckBoxPermissionDto>();
+	private RoleWithPermissionDto? CurrentRolePermissions;
+	private List<Role> lstRole = new List<Role>();
+	private int? selectedRole = null;
+	private string? findPermissionMessage = null;
+
+
+	private bool IsEditMode = false;
+	private bool IsAddMode = false;
+	private RoleWithPermissionDto? findedRoleWithPermissionDto = null;
+	private Alert alertComponnent;
+	private bool showConfirmationDialog = false;
+	private int roleIdToDelete;
+	protected override async Task OnInitializedAsync()
+	{
+
+		lstRoleWithPermissionDto = await _RolePermissionService.GetAllByRelationAsync();
+		List<Permission> lstPermission = await _PermissionService.GetAllAsync();
+		permission = lstPermission.Adapt<List<CheckBoxPermissionDto>>();
+		lstRole = await _RoleService.GetAllAsync();
+
+	}
+	private async void OnSelectionChanged(ChangeEventArgs e)
+	{
+		selectedRole = Convert.ToInt32(e.Value);
+		findedRoleWithPermissionDto = lstRoleWithPermissionDto.Where(w => w.Id == selectedRole).FirstOrDefault();
+		if (findedRoleWithPermissionDto is not RoleWithPermissionDto)
+			findedRoleWithPermissionDto = new RoleWithPermissionDto { Id = selectedRole ?? -1 };
+		await EditRolePermission(findedRoleWithPermissionDto);
+	}
+	private void ShowConfirmation(int roleId)
+	{
+		roleIdToDelete = roleId;
+		showConfirmationDialog = true;
+
+	}
+	private async Task HandleConfirm(bool confirmed)
+	{
+		if (confirmed)
+		{
+			await DeleteRolePermission(roleIdToDelete);
+
+			// همچنین می‌توانید کد لازم برای بروزرسانی لیست کاربران را اضافه کنید.
+		}
+		showConfirmationDialog = false;
+	}
+
+
+	private void AddRolePermission()
+	{
+		selectedRole = null;
+		CurrentRolePermissions = null;
+		findedRoleWithPermissionDto = null;
+		IsEditMode = false;
+		IsAddMode = true;
+		findPermissionMessage = null;
+
+	}
+	private void CancelAddRole()
+	{
+		selectedRole = null;
+		CurrentRolePermissions = null;
+		findedRoleWithPermissionDto = null;
+		IsAddMode = false;
+		findPermissionMessage = null;
+
+	}
+	private async Task EditRolePermission(RoleWithPermissionDto roleWithPermissionDto)
+	{
+		CurrentRolePermissions = null;
+		CurrentRolePermissions = roleWithPermissionDto;
+		permission.ForEach(e =>
+		{
+			if (CurrentRolePermissions?.Permissions?.Any(a => e.Id == a.Id)??false)
+				e.IsCheked = true;
+			else
+				e.IsCheked = false;
+		});
+		IsAddMode = false;
+		IsEditMode = true;
+	}
+
+	private async Task DeleteRolePermission(int roleId)
+	{
+		try
+		{
+			List<RolePermission>? rolePermission = await _RolePermissionService.FindByConditionAsync(w => w.RoleId == roleId);
+			if (rolePermission == null || rolePermission.Count == 0)
+				return;
+			foreach (var item in rolePermission)
+				_RolePermissionService.Delete(item);
+
+			await _RolePermissionService.SaveChangesAsync();
+			alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+
+			await OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+	// private async Task SearchPermission()
+	// {
+	// 	try
+	// 	{
+
+	// 		findedPermission = null;
+	// 		findPermissionMessage = null;
+	// 		if (string.IsNullOrWhiteSpace(selectedRole ))
+	// 			return;
+	// 		findedPermission = (await _PermissionService.FindByConditionAsync(w => w.MobileNumber == selectedRole )).FirstOrDefault();
+	// 		if (findedPermission is not Permission)
+	// 		{
+	// 			findPermissionMessage = "کاربر پیدا نشد";
+	// 			return;
+	// 		}
+	// 		RoleWithPermissionDto? findedPermissionWithPermissionDto = (await _RolePermissionService.GetAllByRelationAsync()).Where(w => w.Id == findedPermission.Id).FirstOrDefault();
+	// 		if (findedPermissionWithPermissionDto is RoleWithPermissionDto)
+	// 		{
+	// 			IsAddMode = false;
+	// 			findedPermission = null;
+	// 			await EditRolePermission(findedPermissionWithPermissionDto);
+	// 			return;
+	// 		}
+	// 		CurrentRolePermissions = findedPermission.Adapt<RoleWithPermissionDto>();
+	// 		if (CurrentRolePermissions != null && CurrentRolePermissions?.Roles == null)
+	// 			CurrentRolePermissions.Roles = new List<Role>();
+
+	// 	}
+	// 	catch (Exception ex)
+	// 	{
+	// 		alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+	// 	}
+
+	// }
+
+	private async Task SaveRolePermission()
+	{
+		try
+		{
+			int currentRoleId = CurrentRolePermissions?.Id ?? -1;
+			foreach (var item in permission)
+			{
+				if (item.IsCheked == true)
+				{
+					Permission? findedPermission = CurrentRolePermissions?.Permissions?.Where(w => w.Id == item.Id).FirstOrDefault();
+					if (findedPermission is not Permission)
+						await _RolePermissionService.InsertAsync(new RolePermission { PermissionId = item.Id, RoleId = currentRoleId });
+
+				}
+				if (item.IsCheked == false)
+				{
+					Permission? findedPermission = CurrentRolePermissions?.Permissions?.Where(w => w.Id == item.Id).FirstOrDefault();
+					if (findedPermission is Permission)
+					{
+						RolePermission? result = (await _RolePermissionService.FindByConditionAsync(w => w.PermissionId == item.Id && w.RoleId == currentRoleId)).FirstOrDefault();
+						if (result is RolePermission)
+							_RolePermissionService.Delete(result);
+
+					}
+				}
+			}
+			await _RolePermissionService.SaveChangesAsync();
+			alertComponnent.Show("عملیات با موفقیت انجام شد ", AlertColorEnum.Success);
+			IsEditMode = false;
+			IsAddMode = false;
+			await OnInitializedAsync();
+		}
+		catch (Exception ex)
+		{
+			alertComponnent.Show(ex?.Message ?? "خطا", AlertColorEnum.Error);
+		}
+	}
+
+}
