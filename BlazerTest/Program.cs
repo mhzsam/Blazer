@@ -9,13 +9,15 @@ using Application.IService;
 using Application.Service;
 using Infrastructure.SetUp;
 using Application.SetUp;
+using BlazerTest.SetUp;
+using Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 // Add services to the container.
 builder.Services.AddRazorComponents()
-	.AddInteractiveServerComponents();
+    .AddInteractiveServerComponents();
 
 var botClient = new TelegramBotClient(builder.Configuration["TELEGRAM_CONNECTION"]);
 builder.Services.AddSingleton(botClient);
@@ -29,9 +31,9 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-	app.UseExceptionHandler("/Error", createScopeForErrors: true);
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-	app.UseHsts();
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();
@@ -42,7 +44,7 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
-	.AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode();
 
 //var cts = new CancellationTokenSource();
 //botClient.TestApiAsync().Wait();
@@ -56,37 +58,38 @@ app.MapRazorComponents<App>()
 //	receiverOptions: new ReceiverOptions { AllowedUpdates = Array.Empty<UpdateType>() },
 //	cancellationToken: cts.Token
 //);
-
+PersentationSetup.PermissionSeedData(builder.Services.BuildServiceProvider()
+                    .GetRequiredService<ApplicationDBContext>());
 app.Run();
 
 async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
 {
-	if (update.Message is not { } message) return;
-	if (message.Text is not { } messageText) return;
+    if (update.Message is not { } message) return;
+    if (message.Text is not { } messageText) return;
 
-	var chatId = message.Chat.Id;
+    var chatId = message.Chat.Id;
 
-	Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+    Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
 
 
 
-	//ارسال پیام به کاربر
-	await botClient.SendTextMessageAsync(
-		chatId: chatId,
-		text: "Hello! This is a test message from your bot.",
-		cancellationToken: cancellationToken);
+    //ارسال پیام به کاربر
+    await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: "Hello! This is a test message from your bot.",
+        cancellationToken: cancellationToken);
 }
 
 // متد برای مدیریت خطاها
 Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
 {
-	var errorMessage = exception switch
-	{
-		ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
-		_ => exception.ToString()
-	};
+    var errorMessage = exception switch
+    {
+        ApiRequestException apiRequestException => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+        _ => exception.ToString()
+    };
 
-	Console.WriteLine(errorMessage);
-	Console.WriteLine("errorrrrrrrr connect to telegram");
-	return Task.CompletedTask;
+    Console.WriteLine(errorMessage);
+    Console.WriteLine("errorrrrrrrr connect to telegram");
+    return Task.CompletedTask;
 }

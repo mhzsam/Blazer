@@ -1,6 +1,7 @@
 ﻿using Application.IInfrastructure;
 using Application.Interface;
 using Application.IService;
+using BlazerTest.Helper;
 using Domain.Entites;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,8 @@ namespace BlazerTest.Controllers
 		[HttpGet("test1")]
 		public async Task Test1()
 		{
-			try
+            var pages = PageFinder.GetAllBlazorPages();
+            try
 			{
 			    await	_unitOfWork.BeginTransactionAsync();
 
