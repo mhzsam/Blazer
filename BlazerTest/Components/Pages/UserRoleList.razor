@@ -1,4 +1,5 @@
 ﻿@page "/UserRoleList"
+@attribute [Authorize(Roles = "UserRoleList")]
 @using Application.Dto
 @using Application.IInfrastructure
 @using Application.IService
@@ -7,6 +8,7 @@
 @using Domain.Entites
 @using Domain.Helper
 @using Mapster
+@using Microsoft.AspNetCore.Authorization
 @inject IUserRoleService _UserRoleService
 @inject IUserService _UserService
 @inject IRoleService _RoleService

@@ -13,6 +13,7 @@ using BlazerTest.SetUp;
 using Infrastructure.Context;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 // Add services to the container.
@@ -26,6 +27,7 @@ builder.Services.AddApplicationDBContext(connectionString);
 builder.Services.AddScoped<IEnvironmentService, EnvironmentService>();
 builder.Services.AddInfrastructureService();
 builder.Services.AddAllApplicationServices();
+builder.Services.CookiAuthentication();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -60,6 +62,8 @@ app.MapRazorComponents<App>()
 //);
 PersentationSetup.PermissionSeedData(builder.Services.BuildServiceProvider()
                     .GetRequiredService<ApplicationDBContext>());
+app.UseAuthentication(); 
+app.UseAuthorization();
 app.Run();
 
 async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)

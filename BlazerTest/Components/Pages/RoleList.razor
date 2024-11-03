@@ -1,10 +1,12 @@
 ﻿@page "/RoleList"
+@attribute [Authorize(Roles = "RoleList")]
 @using Application.IInfrastructure
 @using Application.IService
 @using Application.Interface
 @using BlazerTest.Helper
 @using Domain.Entites
 @using Domain.Helper
+@using Microsoft.AspNetCore.Authorization
 @inject IRoleService _RoleService
 @inject IUnitOfWork _UnitOfWork
 @attribute [StreamRendering]

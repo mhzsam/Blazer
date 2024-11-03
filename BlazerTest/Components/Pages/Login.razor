@@ -1,15 +1,23 @@
 ﻿@page "/login"
 @using Application.IService
+@using BlazerTest.Helper
 @using Domain.Entites
-@inject NavigationManager NavigationManager
+@using Domain.Helper
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using System.Security.Claims
+@inject NavigationManager navigationManager
 @inject IUserService _userService
+@inject IUserRoleService _userRoleService
+@inject IRolePermissionService _rolePermissionService
+
 
 
 <PageTitle>صفحه ورود</PageTitle>
 
 <div class="container mt-5">
 	<h2>ورود به سیستم</h2>
-	<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+	<EditForm Model="@loginModel" FormName="loginform" OnValidSubmit="HandleLogin">
 		<DataAnnotationsValidator />
 		<ValidationSummary />
 
@@ -29,28 +37,69 @@
 </div>
 
 @code {
-	private LoginModel loginModel = new LoginModel();
+	[SupplyParameterFromForm]
+	private LoginModel loginModel { get; set; }
 
+	[CascadingParameter]
+	private HttpContext? HttpContext { get; set; }
 
-	private async void HandleLogin()
+	protected override void OnInitialized() => loginModel ??= new();
+	private async Task HandleLogin()
 	{
-		User? user = (await _userService.FindByConditionAsync(w => w.MobileNumber == loginModel.MobileNumber ) ).FirstOrDefault();
-		if(user is not User)
+		
+			User? user = (await _userService.FindByConditionAsync(w => w.MobileNumber == loginModel.MobileNumber)).FirstOrDefault();
+			if (user is not User || user?.Password != SecurityHelper.PasswordToSHA256(loginModel.Password))
+			{
+				return;
+			};
 
+			List<UserRole>? lstUserRole = await _userRoleService.FindByConditionAsync(w => w.UserId == user.Id);
+			if (lstUserRole == null || lstUserRole.Count == 0)
+			{
+				navigationManager.NavigateTo("/");
+				return;
+			}
 
-		NavigationManager.NavigateTo("/");
+			List<RolePermission>? rolePermissions = await _rolePermissionService.FindByConditionAsync(w => lstUserRole.Select(s => s.RoleId).Contains(w.RoleId));
+			if (rolePermissions == null || rolePermissions.Count == 0)
+			{
+				navigationManager.NavigateTo("/");
+				return;
+			}
+
+			List<string>? lstPermission = rolePermissions?.Select(s => s.Permission.PageName).ToList();
+			if (lstPermission == null || lstPermission.Count == 0)
+			{
+				navigationManager.NavigateTo("/");
+				return;
+			}
+
+			var claims = new List<Claim>
+			{
+				new Claim(ClaimTypes.Name, user.FirstName + user.LastName),
+				new Claim(ClaimTypes.MobilePhone, user.MobileNumber)
+			};
+			lstPermission?.ForEach(e => claims.Add(new Claim(ClaimTypes.Role, e)));
+			var claimsIdentity = new ClaimsIdentity(claims, "BTAuth");
+			var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+			await HttpContext.SignInAsync(claimsPrincipal);
+			navigationManager.NavigateTo("/");
+		
+
 	}
 
 	private void Logout()
 	{
 		// Implement your logout logic here
 		// For demonstration, just navigating to login page
-		NavigationManager.NavigateTo("/login");
+		navigationManager.NavigateTo("/login");
 	}
 
 	public class LoginModel
 	{
+	
 		public string MobileNumber { get; set; }
+		
 		public string Password { get; set; }
 	}
 }
