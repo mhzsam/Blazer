@@ -43,7 +43,7 @@ app.UseRouting();
 app.MapControllers();
 
 app.UseStaticFiles();
-app.UseAntiforgery();
+
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
@@ -64,6 +64,8 @@ PersentationSetup.PermissionSeedData(builder.Services.BuildServiceProvider()
                     .GetRequiredService<ApplicationDBContext>());
 app.UseAuthentication(); 
 app.UseAuthorization();
+app.UseAntiforgery();
+
 app.Run();
 
 async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
